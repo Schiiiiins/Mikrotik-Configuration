@@ -1,0 +1,19 @@
+---
+  name: Check device-config
+  hosts: mikrotik-devices
+  gather_facts: no
+
+  tasks:
+    - name: Check os-version/basic-configuration
+      routeros_command:
+        commands: /system package print
+      register: os_output
+
+    - name: check arp-status
+      routeros_command:
+        commands: /ip arp print
+      register: arp_output
+
+    - name: display facts
+      debug:
+        var: os_output, arp_output

@@ -1,0 +1,53 @@
+---
+  name: Initial VLAN-configuration
+  gather_facts: no
+
+  tasks:
+    - name: creating bridges and check if they are present
+      routeros_command:
+        commands:
+          /interface bridge add name=bridge100
+          /interface bridge add name=bridge200
+          /interface bridge print
+        wait_for:
+          - result[2] contains "{{ item }}"
+        with_items:
+          - "bridge100"
+          - "bridge200"
+
+    - name: assigning ports
+      routeros_command:
+        commands:
+          /interface bridge port add bridge=bridge100 interface=ether1 hw=yes pvid=100
+          /interface bridge port add bridge=bridge200 interface=ether6 hw=yes pvid=200
+          /interface bridge port add bridge=bridge200 interface=ether7 hw=yes pvid=200
+          /interface bridge port add bridge=bridge200 interface=ether8 hw=yes pvid=200
+          /interface bridge port add bridge=bridge200 interface=ether9 hw=yes pvid=200
+          /interface bridge port add bridge=bridge200 interface=ether10 hw=yes pvid=200
+          /interface bridge port add bridge=bridge200 interface=ether11 hw=yes pvid=200
+          /interface bridge port add bridge=bridge200 interface=ether12 hw=yes pvid=200
+
+    - name: create VLANs
+      routeros_command:
+        commands:
+          /interface bridge vlan add bridge=bridge100 untagged=ether1 vlan-ids=100
+          /interface bridge vlan add bridge=bridge200 untagged=ether6,ether7,ether8,ether9,ether10,ether11,ether12 vlan-ids=200
+
+    - name: naming VLANs
+      routeros_command:
+        commands:
+          /interface vlan add interface=bridge100 vlan-id=100 name=Interconnect
+          /interface vlan add interface=bridge200 vlan-id=200 name=MIK
+
+    - name: add interface-IP
+      routeros_command:
+        commands:
+          /ip address add address=192.168.0.8/24 interface=Interconnect
+          /ip address add address=192.168.16.1/24 interface=MIK
+
+    - name: set VLAN-filtering
+      routeros_command:
+        commands:
+          /interface bridge set bridge100 vlan-filtering=yes
+          /interface bridge set bridge200 vlan-filtering=yes
+
